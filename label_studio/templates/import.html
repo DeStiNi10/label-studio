@@ -3,15 +3,15 @@
 
 <!-- Import Data Dialog with Wait for Add more data -->
 
-<div class="ui container" id="import-tasks">
+<div class="ui inverted container" id="import-tasks">
 
   <!-- Dimmer and loader -->
   <div class="ui page dimmer">
-    <div class="ui large text loader orange">Importing in progress ...</div>
+    <div class="ui inverted large text loader orange">Importing in progress ...</div>
   </div>
 
   <!-- Input file form -->
-  <div class="ui form">
+  <div class="ui inverted form">
     <input id="file-input" type="file" name="file" multiple onchange="send_data(event)" style="display: none"/>
 
     <div class="ui content">
@@ -30,7 +30,7 @@
   <iframe name="my_iframe" src="about:blank" hidden></iframe>
   <form target="my_iframe" action="about:blank" method="get">
 
-    <div class="ui form">
+    <div class="ui inverted form">
       <label for="url-input" class="description">Or paste a file URL or task in JSON format here</label><br/>
       <div class="ui action input fluid">
         <input id="url-input" type="text" name="url" autofocus autocomplete="on"
@@ -44,14 +44,14 @@
   </form>
 
   <!-- Help message -->
-  <div class="ui divider hidden"></div>
+  <div class="ui inverted divider hidden"></div>
   <div class="ui" style="display: block !important;">
     {% include "includes/import_help.html" %}
   </div>
 
 
   <!-- Dialog: Add more data WAIT  -->
-  <div class="ui modal" id="upload-dialog">
+  <div class="ui inverted modal" id="upload-dialog">
     <!--suppress CheckTagEmptyBody -->
     <i class="close icon"></i>
     <div class="header red">

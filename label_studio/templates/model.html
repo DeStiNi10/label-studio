@@ -6,15 +6,15 @@
     }
   </style>
 
-  <div class="ui container">
-    <div class="wrapper">
+  <div class="ui inverted container">
+    <div class="inverted wrapper">
 
-      <div class="ui action input fluid">
+      <div class="ui inverted action input fluid">
         <input id="ml_backend_url" type="text" placeholder="http://localhost:9090">
-        <button class="ui positive button" onclick="addMlBackend()">Add Backend</button>
+        <button class="ui inverted positive button" onclick="addMlBackend()">Add Backend</button>
       </div>
-      <div class="ui divider hidden"></div>
-      <div class="ui three column grid">
+      <div class="ui inverted divider hidden"></div>
+      <div class="ui inverted three column grid">
 
         <div class="sixteen wide column">
           <div class="ui cards">
@@ -63,17 +63,17 @@
               </div>
 
             {% else %}
-              <div style="margin: 0 auto">
+              <!-- <div style="margin: 0 auto">
                 <p>No connected ML backends.
                   <a href="https://labelstud.io/guide/ml.html">How to use ML models in Label Studio?</a>
                 </p>
-              </div>
+              </div> -->
             {% endfor %}
           </div>
         </div>
 
         <!-- Train & Prediction logs -->
-        {#          <div class="ui styled accordion fluid">#}
+        {#          <div class="ui inverted styled accordion fluid">#}
         {#            <div class="title"><i class="dropdown icon"></i> Train log</div>#}
         {#            <div class="scrolling content" style="max-height: 400px; overflow-y: scroll;">#}
         {#              <pre>{{ ml_backend.train_log }}</pre>#}
@@ -122,7 +122,7 @@
   </div>
 
   <!-- Error log dialog -->
-  <div class="ui modal" id="error-log-dialog">
+  <div class="ui inverted modal" id="error-log-dialog"> <!-- testing inverted modal-->
     <i class="close icon"></i>
     <div class="header red">
       ML Backend Error
@@ -140,8 +140,8 @@
   </div>
 
   <!-- Dimmer and loader -->
-  <div class="ui page dimmer">
-    <div class="ui large text orange loader">Processing, please wait</div>
+  <div class="ui inverted page dimmer">
+    <div class="ui inverted large text orange loader">Processing, please wait</div>
   </div>
 
   <script>

@@ -117,7 +117,7 @@ a {
 }
 
 #header {
-    background-color: #fff;
+    background-color: #000000;
     display: flex;
     align-items: center;
     padding: 5px 20px 5px 40px;
@@ -140,8 +140,8 @@ a {
     vertical-align: middle;
     margin-right: 5px;
     margin-top: 5px;
-    width: 30px;
-    height: 30px;
+    width: 126px;
+    height: 19px;
 }
 
 .img-text {
@@ -161,7 +161,7 @@ a {
 }
 
 #nav a {
-    color: #797979;
+    color: #fff;
     font-family: "Source Sans Pro", "Helvetica Neue", Arial, sans-serif;
     margin-right: 2em;
     font-size: 14px;
@@ -237,8 +237,8 @@ a {
 }
 
 .delim {
-    color: #89ac00;
-    margin-right: 1em;
+    color: #4ADD8F;
+    margin-right: 0.2em;
     font-weight: bold;
 }
 

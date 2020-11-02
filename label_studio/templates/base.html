@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta charset="utf-8"/>
 
-  <link rel="shortcut icon" href="static/favicon.ico"/>
+  <link rel="shortcut icon" href="static/faviconAI.png"/>
   <link rel="stylesheet" href="static/fonts/dosis/dosis.css">
   <link rel="stylesheet" href="static/css/reset.css">
   <link rel="stylesheet" href="static/css/main.css?v2">
@@ -46,13 +46,12 @@
 <!-- Header -->
 <div id="header">
   <a id="logo" href="welcome">
-    <img src="static/images/ls_logo.png" alt="label studio logo" class="img-logo">
-    <span class="img-text">{{ config['title'] }}</span>
+    <img src="static/images/AIML-Data-logo.png" alt="AIMLDATA logo" class="img-logo">
+    <!-- <span class="img-text">{{ config['title'] }}</span> -->
   </a>
   <ul id="nav">
   &nbsp;
     <a href="." class="{% if url_for(request.endpoint) == '/' %}active{% endif %}">Labeling</a>
-
 
     <a href="tasks" class="{% if url_for(request.endpoint) == '/tasks' %}active{% endif %}">Tasks</a>
 
@@ -65,9 +64,12 @@
     <a href="model" class="{% if url_for(request.endpoint) == '/model' %}active{% endif %}">Model</a>
 
 
-    <a href="setup" class="{% if url_for(request.endpoint) == '/setup' %}active{% endif %}">Setup</a>
-
-    <span>
+    <a href="setup" class="{% if url_for(request.endpoint) == '/setup' %}active{% endif %}">Setup</a>   
+    {% if current_user.is_authenticated %}
+    <a href="logout" class="{% if url_for(request.endpoint) == '/setup' %}active{% endif %}">Logout</a>
+    {% endif %}
+    
+    <!-- <span>
       <a class="outside-links first" href="https://labelstud.io/guide/" target="_blank">Docs</a>
 
       <a class="outside-links" href="https://github.com/heartexlabs/label-studio" target="_blank">
@@ -78,7 +80,7 @@
          data-tooltip="If you have found a bug or have questions ping us in Slack" data-position="bottom right"
          target="_blank"><img src="static/images/slack.png" height="22"/>
       </a>
-    </span>
+    </span> -->
 
   </ul>
 </div>

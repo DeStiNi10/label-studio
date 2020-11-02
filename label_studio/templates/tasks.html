@@ -14,10 +14,10 @@
 
     <!-- Main content -->
 
-    <div class="ui container wrapper" v-if="!quick_view">
+    <div class="ui inverted container wrapper" v-if="!quick_view">
 
       <!-- Statistics -->
-      <div class="ui three column centered grid stackable">
+      <div class="ui inverted three column centered grid stackable">
         <div class="row">
 
           <!-- Total tasks -->
@@ -152,7 +152,7 @@
              v-if="!(quick_view_show_table === false && quick_view)"
              :class="quick_view ? '' : 'sixteen wide'">
           <!-- Table -->
-          <div class="table-wrapper">
+          <div class="table-wrapper" style="background: white">
             <table v-if="project.task_count > 0" ref="task_table"
                    class="task-table" :class="{'center-margin': !quick_view}">
               <thead>

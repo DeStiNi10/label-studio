@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>{{ config['title'] }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta charset="utf-8"/>
+
+  <link href="//fonts.googleapis.com/css?family=Dosis:500&amp;text=LabelStudio" rel="stylesheet" type="text/css">
+  <link rel="shortcut icon" href="static/faviconAI.png"/>
+  <link rel="stylesheet" href="static/css/reset.css">
+  <link rel="stylesheet" href="static/css/main.css?v2">
+  <link rel="stylesheet" href="static/css/fontall.min.css">
+  <link rel="stylesheet" href="static/semantic/semantic.min.css">
+
+  <script src="static/js/jquery.min.js"></script>
+  <script src="static/semantic/semantic.min.js"></script>
+  <script src="static/js/js.cookie.js"></script>
+  <script src="static/js/popper.min.js"></script>
+  <script src="static/js/tippy-bundle.umd.min.js"></script>
+  <script src="static/js/helpers.js"></script>
+
+  <script
+  src="https://browser.sentry-cdn.com/5.17.0/bundle.min.js"
+  integrity="sha384-lowBFC6YTkvMIWPORr7+TERnCkZdo5ab00oH5NkFLeQUAmBTLGwJpFjF6djuxJ/5"
+  crossorigin="anonymous"></script>
+  <script>
+    Sentry.init({ dsn: 'https://f24f3e8da54c4a16a1ce9bef30ea9c30@o227124.ingest.sentry.io/5285295' });
+  </script>
+
+  <!-- Editor CSS -->
+  {% for css in editor_css %}
+    <link href="{{ css }}" rel="stylesheet">
+  {% endfor %}
+
+  <!-- Editor JS -->
+  {% for js in editor_js %}
+    <script src="{{ js }}"></script>
+  {% endfor %}
+
+</head>
+
+<link rel='stylesheet' id='twentyseventeen-fonts-css'  href='https://fonts.googleapis.com/css?family=Libre+Franklin%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C800%2C800i&#038;subset=latin%2Clatin-ext&#038;display=fallback' media='all' />
+
+<style type="text/css">
+    body {
+      background-color: #101010;
+    }
+    body > .grid {
+      height: 100%;
+    }
+    .image {
+      margin-top: -100px;
+    }
+    .column {
+      max-width: 450px;
+    }
+  </style>
+  <script>
+  $(document)
+    .ready(function() {
+      $('.ui.form')
+        .form({
+          fields: {
+            Username: {
+              identifier  : 'username',
+              rules: [
+                {
+                  type   : 'empty',
+                  prompt : 'Please enter your Username'
+                },
+                {
+                  type   : 'username',
+                  prompt : 'Please enter a valid Username'
+                }
+              ]
+            },
+            password: {
+              identifier  : 'password',
+              rules: [
+                {
+                  type   : 'empty',
+                  prompt : 'Please enter your password'
+                },
+                {
+                  type   : 'length[6]',
+                  prompt : 'Your password must be at least 6 characters'
+                }
+              ]
+            }
+          }
+        })
+      ;
+    })
+  ;
+  </script>
+</head>
+<body>
+<!-- purple color #7337FD and font Libre Franklin green color: #4ADD8F --> 
+<div class="ui inverted middle aligned center aligned grid">
+  <div class="column">
+      <div class="title" style= "font-style: Libre-Franklin; font-size:80px; font-weight:bold; column-width: auto">
+          <br><span style="color: #4ADD8F">AIML </span><span style="color: #7337FD">Data</span>
+      </div>
+    <h2 class="ui header" style="color: #4ADD8F">
+      <!-- <img src="assets/images/logo.png" class="image"> -->
+      <div class="content" style="margin-top: 50px">
+        Log-in to your account
+      </div>
+    </h2>
+    <form method="POST" action="/login" class="ui large form">
+      <div class="ui grey stacked segment">
+        <div class="field">
+          <div class="ui left icon input">
+            <i class="user icon"></i>
+            <input type="text" name="username" placeholder="username">
+          </div>
+        </div>
+        <div class="field">
+          <div class="ui left icon input">
+            <i class="lock icon"></i>
+            <input type="password" name="password" placeholder="Password">
+          </div>
+        </div>
+        <div class="ui fluid large submit button">Login</div>
+      </div>
+
+      <div class="ui inverted error message"></div>
+    </form>
+    <div class="ui inverted message">
+      New to us? <a href="signup">Sign Up</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+

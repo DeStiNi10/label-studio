@@ -5,8 +5,8 @@
   "host": "0.0.0.0",
   "port": 8080,
   "debug": false,
-  "label_config": null,
-  "input_path": null,
+  "label_config": "config.xml",
+  "input_path": "tasks.json",
   "output_dir": "completions",
   "instruction": "Type some <b>hypertext</b> for label experts!",
   "allow_delete_completions": true,
@@ -17,5 +17,15 @@
   "sampling": "sequential",
   "ml_backends": [],
   "task_page_auto_update_timer": 10000,
-  "show_project_links_in_multisession": true
+  "show_project_links_in_multisession": true,
+  "source": {
+    "name": "Tasks",
+    "type": "tasks-json",
+    "path": "/home/atul/label-studio/labeling_project/tasks.json"
+  },
+  "target": {
+    "name": "Completions",
+    "type": "completions-dir",
+    "path": "/home/atul/label-studio/labeling_project/completions"
+  }
 }

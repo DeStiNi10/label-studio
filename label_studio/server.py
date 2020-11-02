@@ -28,7 +28,7 @@ from gevent.pywsgi import WSGIServer
 
 from flask import (
     request, jsonify, make_response, Response, Response as HttpResponse,
-    send_file, session, redirect, g
+    send_file, session, redirect, url_for, flash, g
 )
 from flask_api import status
 from types import SimpleNamespace
@@ -55,6 +55,13 @@ from label_studio.project import Project
 from label_studio.tasks import Tasks
 from label_studio.utils.auth import requires_auth
 
+# from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, logout_user, login_required
+from label_studio.models import db, User
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,6 +77,22 @@ def create_app():
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     app.config['WTF_CSRF_ENABLED'] = False
     app.url_map.strict_slashes = False
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+
+    db.init_app(app)
+
+    login_manager = LoginManager()
+    login_manager.login_view = '/login'
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        # since the user_id is just the primary key of our user table, use it in the query for the user
+        return User.query.get(int(user_id))
+
+    with app.app_context():
+        db.create_all()
     return app
 
 
@@ -96,13 +119,13 @@ def project_get_or_create(multi_session_force_recreate=False):
     if input_args and input_args.command == 'start-multi-session':
         # get user from session
         if 'user' not in session:
-            session['user'] = str(uuid4())
+            session['user'] = str(User)
         user = session['user']
         g.user = user
 
         # get project from session
         if 'project' not in session or multi_session_force_recreate:
-            session['project'] = str(uuid4())
+            session['project'] = str(User)
         project = session['project']
 
         # check for shared projects and get owner user
@@ -146,7 +169,7 @@ def app_before_request_callback():
     def prepare_globals():
         # setup session cookie
         if 'session_id' not in session:
-            session['session_id'] = str(uuid4())
+            session['session_id'] = str(User)
         g.project = project_get_or_create()
         g.analytics = Analytics(input_args, g.project)
         g.sid = g.analytics.server_id
@@ -176,6 +199,7 @@ def send_media(path):
 
 @app.route('/upload/<path:path>')
 @requires_auth
+@login_required
 def send_upload(path):
     """ User uploaded files
     """
@@ -186,6 +210,7 @@ def send_upload(path):
 
 
 @app.route('/samples/time-series.csv')
+@login_required
 @requires_auth
 def samples_time_series():
     """ Generate time series example for preview
@@ -241,6 +266,7 @@ def validation_error_handler(error):
 
 @app.route('/')
 @requires_auth
+@login_required
 @exception_treatment_page
 def labeling_page():
     """ Label studio frontend: task labeling
@@ -271,9 +297,74 @@ def labeling_page():
         **find_editor_files()
     )
 
+@app.route('/login')
+def login():
+    return flask.render_template('login.html')
+
+
+@app.route('/login', methods=['POST'])
+def login_post():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    remember = True if request.form.get('remember') else False
+
+    user = User.query.filter_by(username=username).first()
+
+    # check if user actually exists
+    # take the user supplied password, hash it, and compare it to the hashed password in database
+    if not user or not check_password_hash(user.password, password):
+        flash('Please check your login details and try again.')
+        # if user doesn't exist or password is wrong, reload the page
+        return redirect(url_for('login'))
+
+    # if the above check passes, then we know the user has the right credentials
+    login_user(user, remember=remember)
+    return redirect(url_for("welcome_page"))
+
+
+@app.route('/signup')
+@requires_auth
+@exception_treatment_page
+def signup():
+    return flask.render_template('signup.html')
+
+
+@app.route('/signup', methods=['POST'])
+@requires_auth
+@exception_treatment_page
+def signup_post():
+
+    name = request.form.get('name')
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    # if this returns a user, then the email already exists in database
+    user = User.query.filter_by(username=username).first()
+
+    if user:  # if a user is found, we want to redirect back to signup page so user can try again
+        flash('Username already exists')
+        return redirect(url_for('signup'))
+
+    # create new user with the form data. Hash the password so plaintext version isn't saved.
+    new_user = User(username=username, name=name, password=generate_password_hash(password, method='sha256'))
+
+    # add the new user to the database
+    db.session.add(new_user)
+    db.session.commit()
+
+    return redirect(url_for('login'))
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 
 @app.route('/welcome')
 @requires_auth
+@login_required
 @exception_treatment_page
 def welcome_page():
     """ Label studio frontend: task labeling
@@ -289,6 +380,7 @@ def welcome_page():
 
 @app.route('/tasks', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 @exception_treatment_page
 def tasks_page():
     """ Tasks and completions page
@@ -306,6 +398,7 @@ def tasks_page():
 
 @app.route('/setup')
 @requires_auth
+@login_required
 @exception_treatment_page
 def setup_page():
     """ Setup label config
@@ -356,6 +449,7 @@ def setup_page():
 
 @app.route('/import')
 @requires_auth
+@login_required
 @exception_treatment_page
 def import_page():
     """ Import tasks from JSON, CSV, ZIP and more
@@ -369,6 +463,7 @@ def import_page():
 
 @app.route('/export')
 @requires_auth
+@login_required
 @exception_treatment_page
 def export_page():
     """ Export completions as JSON or using converters
@@ -383,6 +478,7 @@ def export_page():
 
 @app.route('/model')
 @requires_auth
+@login_required
 @exception_treatment_page
 def model_page():
     """ Machine learning"""
@@ -426,6 +522,7 @@ def _get_sample_task(label_config):
 
 @app.route('/api/render-label-studio', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 def api_render_label_studio():
     """ Label studio frontend rendering for iframe
     """
@@ -459,6 +556,7 @@ def api_render_label_studio():
 
 @app.route('/api/validate-config', methods=['POST'])
 @requires_auth
+@login_required
 def api_validate_config():
     """ Validate label config via tags schema
     """
@@ -476,6 +574,7 @@ def api_validate_config():
 
 @app.route('/api/save-config', methods=['POST'])
 @requires_auth
+@login_required
 def api_save_config():
     """ Save label config
     """
@@ -503,6 +602,7 @@ def api_save_config():
 
 @app.route('/api/import-example', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 def api_import_example():
     """ Generate upload data example by config only
     """
@@ -524,6 +624,7 @@ def api_import_example():
 
 @app.route('/api/import-example-file')
 @requires_auth
+@login_required
 def api_import_example_file():
     """ Task examples for import
     """
@@ -574,6 +675,7 @@ def api_import_example_file():
 
 @app.route('/api/import', methods=['POST'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_import():
     # make django compatibility for uploader module
@@ -626,6 +728,7 @@ def api_import():
 
 @app.route('/api/export', methods=['GET'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_export():
     export_format = request.args.get('format')
@@ -649,6 +752,7 @@ def api_export():
 
 @app.route('/api/projects/1/next/', methods=['GET'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_generate_next_task():
     """ Generate next task to label
@@ -671,6 +775,7 @@ def api_generate_next_task():
 
 @app.route('/api/project/', methods=['POST', 'GET', 'PATCH'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_project():
     """ Project global operation"""
@@ -691,6 +796,7 @@ def api_project():
 
 @app.route('/api/project/storage-settings/', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_project_storage_settings():
 
@@ -743,6 +849,7 @@ def api_project_storage_settings():
 
 @app.route('/api/tasks/', methods=['GET'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_all_tasks():
     """ Get full tasks with pagination, completions and predictions
@@ -804,6 +911,7 @@ def api_all_tasks():
 
 @app.route('/api/tasks/<task_id>/', methods=['GET', 'DELETE'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_tasks(task_id):
     """ Get task by id
@@ -825,6 +933,7 @@ def api_tasks(task_id):
 
 @app.route('/api/tasks/delete', methods=['DELETE'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_tasks_delete():
     """ Delete all tasks & completions
@@ -845,6 +954,7 @@ def api_all_completion_ids():
 
 @app.route('/api/tasks/<task_id>/completions/', methods=['POST', 'DELETE'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_completions(task_id):
     """ Delete or save new completion to output_dir with the same name as task_id
@@ -862,6 +972,7 @@ def api_completions(task_id):
 
 @app.route('/api/project/completions/', methods=['DELETE'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_all_completions():
     """ Delete all completions
@@ -876,6 +987,7 @@ def api_all_completions():
 
 @app.route('/api/tasks/<task_id>/cancel', methods=['POST'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_tasks_cancel(task_id):
     task_id = int(task_id)
@@ -889,6 +1001,7 @@ def api_tasks_cancel(task_id):
 
 @app.route('/api/tasks/<task_id>/completions/<completion_id>/', methods=['DELETE'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_completion_by_id(task_id, completion_id):
     """ Delete or save new completion to output_dir with the same name as task_id.
@@ -906,6 +1019,7 @@ def api_completion_by_id(task_id, completion_id):
 
 @app.route('/api/tasks/<task_id>/completions/<completion_id>/', methods=['PATCH'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_completion_update(task_id, completion_id):
     """ Rewrite existing completion with patch.
@@ -924,6 +1038,7 @@ def api_completion_update(task_id, completion_id):
 
 @app.route('/api/projects/1/expert_instruction')
 @requires_auth
+@login_required
 @exception_treatment
 def api_instruction():
     """ Instruction for annotators
@@ -933,6 +1048,7 @@ def api_instruction():
 
 @app.route('/api/remove-ml-backend', methods=['POST'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_remove_ml_backend():
     ml_backend_name = request.json['name']
@@ -942,6 +1058,7 @@ def api_remove_ml_backend():
 
 @app.route('/predict', methods=['POST'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_predict():
     """ Make ML prediction using ml_backends
@@ -961,6 +1078,7 @@ def api_predict():
 
 @app.route('/api/train', methods=['POST'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_train():
     """Send train signal to ML backend"""
@@ -979,6 +1097,7 @@ def api_train():
 
 @app.route('/api/predictions', methods=['POST'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_predictions():
     """Send creating predictions signal to ML backend"""
@@ -996,6 +1115,7 @@ def api_predictions():
 
 @app.route('/version')
 @requires_auth
+@login_required
 @exception_treatment
 def version():
     """Show backend and frontend version"""
@@ -1009,6 +1129,7 @@ def version():
 
 @app.route('/data/<path:filename>')
 @requires_auth
+@login_required
 @exception_treatment
 def get_data_file(filename):
     """ External resource serving
@@ -1030,6 +1151,7 @@ def get_data_file(filename):
 
 @app.route('/api/project-switch', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 @exception_treatment
 def api_project_switch():
     """ Switch projects """
@@ -1060,6 +1182,7 @@ def api_project_switch():
 
 @app.route('/api/states', methods=['GET'])
 @requires_auth
+@login_required
 @exception_treatment
 def stats():
     """ Save states
@@ -1069,6 +1192,7 @@ def stats():
 
 @app.route('/api/health', methods=['GET'])
 @requires_auth
+@login_required
 @exception_treatment
 def health():
     """ Health check
@@ -1091,7 +1215,7 @@ def start_browser(ls_url, no_browser):
     if no_browser:
         return
 
-    browser_url = ls_url + '/welcome'
+    browser_url = ls_url + '/login'
     threading.Timer(2.5, lambda: webbrowser.open(browser_url)).start()
     print('Start browser at URL: ' + browser_url)
 

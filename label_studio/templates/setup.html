@@ -40,17 +40,17 @@
   }
 </style>
 
-<div class="ui container">
-  <div class="ui wrapper">
+<div class="ui inverted container">
+  <div class="ui inverted wrapper">
     {% include 'includes/setup_help.html' %}
 
-    <form action="api/save-config" method="post" class="ui form">
+    <form action="api/save-config" method="post" class="ui inverted form">
 
       <!-- Textarea & Preview in two cols -->
-      <div class="ui two column grid zero-margin step2 stackable">
+      <div class="ui inverted two column grid zero-margin step2 stackable">
         <div class="column" id="left-column">
 
-          <h3>Labeling Config</h3>
+          <h3 style="color: white">Labeling Config</h3>
 
           <!-- Code -->
           <textarea name="label_config" cols="40" rows="10" class="project-form htx-html-editor"
@@ -76,20 +76,20 @@
         </div>
         <div class="column" style="padding-left: 0;">
 
-          <h3>Interface Preview</h3>
+          <h3 style="color: white">Interface Preview</h3>
 
           <!--Validation message -->
-          <div class="ui error message validation"></div>
+          <div class="ui inverted error message validation"></div>
 
           <div id="editor-wrap"></div>
           <pre id="preload-editor">...</pre>
 
-          <h3>Input Task Preview</h3>
-          <pre class="segment" id="upload-data-example" style="word-wrap: break-word">...</pre>
+          <h3 style="color: white">Input Task Preview</h3>
+          <pre class="segment" id="upload-data-example" style="word-wrap: break-word; color: white">...</pre>
 
-          <h3>Output Result Preview</h3>
+          <h3 style="color: white">Output Result Preview</h3>
           <div class="segment">
-            <pre class="segment" id="data-results" style="word-wrap: break-word ">...</pre>
+            <pre class="segment" id="data-results" style="word-wrap: break-word; color: white ">...</pre>
           </div>
         </div>
       </div>

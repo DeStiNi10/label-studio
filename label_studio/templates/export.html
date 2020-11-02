@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 {% block body %}
 
-  <div class="ui container" id="export">
+  <div class="ui inverted container" id="export">
     <!-- Export help message -->
-    <div class="ui message">
+    <div class="ui inverted message">
       <i class="close icon"></i>
 
       <!-- Label config -->
-      <div class="header">Export help</div>
-      <div class="content">
-        <ul class="ui list">
+      <div class="inverted header">Export help</div>
+      <div class="inverted content">
+        <ul class="ui inverted list">
           <li>You can export completed tasks to one of the following formats:</li>
           <ul>
             <li>JSON</li>
@@ -50,7 +50,7 @@
     </div>
 
     <center>
-      <div class="header">Choose export format:</div>
+      <div class="header" style="color: white">Choose export format:</div>
       <select id="export-format-dropdown" class="ui dropdown">
         {% for format in formats %}
           <option value="{{ format }}">{{ format }}</option>
@@ -63,9 +63,9 @@
         Export Completions</a>
       <br>
 
-      <div style="margin-top: 5em">
+      <!-- <div style="margin-top: 5em">
         <img src="static/images/opossum_snuggle.png" width="250px" style="display: block;" />
-      </div>
+      </div> -->
     </center>
 
   </div>

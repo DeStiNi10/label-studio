@@ -1,0 +1,18 @@
+# models.py for login authentication
+
+from flask_login import UserMixin
+from flask_sqlalchemy import SQLAlchemy
+# from label_studio.server import db
+
+db = SQLAlchemy()
+
+
+class User(UserMixin, db.Model):
+    # primary keys are required by SQLAlchemy
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True)
+    password = db.Column(db.String(100))
+    name = db.Column(db.String(1000))
+
+
+# db.create_all()
