@@ -59,7 +59,7 @@ from label_studio.utils.auth import requires_auth
 from flask_login import LoginManager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from label_studio.models import db, User
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,6 @@ def create_app():
     def load_user(user_id):
         # since the user_id is just the primary key of our user table, use it in the query for the user
         return User.query.get(int(user_id))
-
     with app.app_context():
         db.create_all()
     return app
@@ -119,13 +118,13 @@ def project_get_or_create(multi_session_force_recreate=False):
     if input_args and input_args.command == 'start-multi-session':
         # get user from session
         if 'user' not in session:
-            session['user'] = str(User)
+            session['user'] = str(current_user.username)
         user = session['user']
         g.user = user
 
         # get project from session
         if 'project' not in session or multi_session_force_recreate:
-            session['project'] = str(User)
+            session['project'] = str(current_user.username)
         project = session['project']
 
         # check for shared projects and get owner user
@@ -169,16 +168,17 @@ def app_before_request_callback():
     def prepare_globals():
         # setup session cookie
         if 'session_id' not in session:
-            session['session_id'] = str(User)
+            session['session_id'] = str(current_user.username)
         g.project = project_get_or_create()
         g.analytics = Analytics(input_args, g.project)
         g.sid = g.analytics.server_id
 
     # show different exception pages for api and other endpoints
-    if request.path.startswith('/api'):
-        return exception_treatment(prepare_globals)()
-    else:
-        return exception_treatment_page(prepare_globals)()
+    if current_user.is_authenticated:
+        if request.path.startswith('/api'):
+            return exception_treatment(prepare_globals)()
+        else:
+            return exception_treatment_page(prepare_globals)()
 
 @app.after_request
 @exception_treatment
@@ -359,6 +359,7 @@ def signup_post():
 @login_required
 def logout():
     logout_user()
+    session.clear()
     return redirect(url_for('login'))
 
 
