@@ -8,7 +8,7 @@ COPY requirements.txt /label-studio
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-ENV PORT="8080"
+ENV PORT="8081"
 ENV PROJECT_NAME="my_project"
 ENV HOST=0.0.0.0
 ENV PROTOCOL=http://
