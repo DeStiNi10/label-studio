@@ -53,7 +53,7 @@ from label_studio.data_import.views import blueprint as data_import_blueprint
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, \
-    UserMixin, RoleMixin, login_required, current_user, logout_user
+    UserMixin, RoleMixin, login_required, current_user, logout_user, utils
 from flask_security.utils import encrypt_password
 import flask_admin
 from flask_admin.contrib import sqla
@@ -266,26 +266,49 @@ def create_app(label_studio_config=None):
     admin_views(admin)
 
     db.init_app(app)
+  
+    # with app.app_context():
+    #     exists = db.session.query(User.id).filter_by(email='aiml_admin').scalar() is not None
+    #     if exists is None:
+    #         db.drop_all()
+    #         db.create_all()
+    #         user_role = Role(name='user')
+    #         super_user_role = Role(name='superuser')
+    #         db.session.add(user_role)
+    #         db.session.add(super_user_role)
+    #         db.session.commit()
+
+    #         test_user = user_datastore.create_user(
+    #             first_name='Admin',
+    #             email='aiml_admin',
+    #             password=encrypt_password('admin123'),
+    #             roles=[user_role, super_user_role]
+    #         )
+    #         db.session.commit()
     
     with app.app_context():
-        exists = db.session.query(User.id).filter_by(email='aiml_admin').scalar() is not None
-        if exists is None:
-            db.drop_all()
-            db.create_all()
-            user_role = Role(name='user')
-            super_user_role = Role(name='superuser')
-            db.session.add(user_role)
-            db.session.add(super_user_role)
-            db.session.commit()
+        #Create tables
+        db.create_all()
+        # Create the Roles "admin" and "end-user" -- unless they already exist
+        user_datastore.find_or_create_role(name='superuser', description='Administrator')
+        user_datastore.find_or_create_role(name='user', description='End user')
 
-            test_user = user_datastore.create_user(
-                first_name='Admin',
-                email='aiml_admin',
-                password=encrypt_password('admin123'),
-                roles=[user_role, super_user_role]
-            )
-            db.session.commit()
+        # Create two Users for testing purposes -- unless they already exists.
+        # In each case, use Flask-Security utility function to encrypt the password.
+        encrypted_password = utils.encrypt_password('password')
+        if not user_datastore.get_user('test_user'):
+            user_datastore.create_user(email='test_user', password=encrypted_password,first_name='Test',roles=['user'])
+        if not user_datastore.get_user('aiml_admin'):
+            user_datastore.create_user(email='aiml_admin', password=encrypted_password,first_name='Admin',roles=['superuser','user'])
 
+        # Commit any database changes; the User and Roles must exist before we can add a Role to the User
+        db.session.commit()
+
+        # Give one User has the "end-user" role, while the other has the "admin" role. (This will have no effect if the
+        # Users already have these Roles.) Again, commit any database changes.
+        # user_datastore.add_role_to_user('test_user', 'end-user')
+        # user_datastore.add_role_to_user('aiml_admin', 'admin')
+        # db.session.commit()
 
     app.before_request(app_before_request_callback)
     app.after_request(app_after_request_callback)
