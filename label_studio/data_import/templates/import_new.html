@@ -18,7 +18,7 @@
   <div id="vue_loader" class="ui large text loader loading active">Loading ...</div>
 
   <!-- Vue app -->
-  <div class="ui hidden" id="import-tasks" :class="{ loaded: vueLoaded }">
+  <div class="ui inverted hidden" id="import-tasks" :class="{ loaded: vueLoaded }">
     <div v-if="preview">
       <h1>Files uploaded</h1>
       <p>Import them to the task manager to start labeling</p>
@@ -35,11 +35,10 @@
           </li>
         </ul>
       </div>
-      <div class="ui checkbox" v-if="show_files_as_tasks_list">
+      <div class="ui inverted checkbox" v-if="show_files_as_tasks_list">
         <input type="checkbox" id="files_type" @change="toggle_type" ref="files_type" :checked="files_as_tasks_list.selected"/>
         <label for="files_type">
           Interpret each line in files as a single item
-          <p class="rtfm"><a href="https://labelstud.io/guide/tasks.html#CSV-TSV" target="_blank">Read Documentation</a> for details</a></p>
         </label>
       </div>
 
@@ -62,7 +61,6 @@
 
       <div class="loading splash" v-if="loading">
         <div class="spinner">
-          <img src="static/images/opossum_looking.png" width="60px">
         </div>
       </div>
 
@@ -100,7 +98,6 @@
       <div class="loading">
         <h4>Loading files...</h4>
         <div class="spinner">
-          <img src="static/images/opossum_looking.png" width="60px">
         </div>
         <p>Depending on size it may take several minutes</p>
       </div>
@@ -155,10 +152,6 @@
           <input type="text" name="url" ref="url" placeholder="Dataset URL">
           <button class="ui primary button">Load</button>
         </form>
-        <p class="rtfm">
-          To learn about supported formats check out the
-          <a href="https://labelstud.io/guide/tasks.html" target="_blank">Documentation</a>
-        </p>
       </div>
 
       <div class="ui form tab-cloud" v-if="source === 'cloud'" ref="cloud">

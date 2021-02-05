@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>AIML Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta charset="utf-8"/>
+
+  <link href="//fonts.googleapis.com/css?family=Dosis:500&amp;text=LabelStudio" rel="stylesheet" type="text/css">
+  <link rel="shortcut icon" href="./static/faviconAI.png"/>
+  <link rel="stylesheet" href="{{url_for('static',filename='css/reset.css')}}""./static/css/reset.css">
+  <link rel="stylesheet" href="{{url_for('static',filename='css/main.css')}}">
+  <link rel="stylesheet" href="{{url_for('static',filename='css/fontall.min.css')}}">
+  <link rel="stylesheet" href="{{url_for('static',filename='semantic/semantic.min.css')}}"
+
+  <!-- Editor CSS -->
+  {% for css in editor_css %}
+    <link href="{{ css }}" rel="stylesheet">
+  {% endfor %}
+{# 
+  <!-- Editor JS -->
+  {% for js in editor_js %}
+    <script src="{{ js }}"></script>
+  {% endfor %} #}
+
+</head>
+
+<link rel='stylesheet' id='twentyseventeen-fonts-css'  href='https://fonts.googleapis.com/css?family=Libre+Franklin%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C800%2C800i&#038;subset=latin%2Clatin-ext&#038;display=fallback' media='all' />
+
+<style type="text/css">
+    body {
+      background-color: #181818;
+    }
+    body > .grid {
+      height: 100%;
+    }
+    .image {
+      margin-top: -100px;
+    }
+    .column {
+      max-width: 550px;
+    }
+    .ui.form {
+      position: relative;
+      max-width: 60%;
+    }
+    form {
+      margin: auto;
+    }
+
+  </style>
+</head>
+{% from "security/_macros.html" import render_field, form_errors  %}
+
+<body>
+<!-- purple color #7337FD and font Libre Franklin green color: #4ADD8F --> 
+<div class="ui inverted middle aligned center aligned grid">
+  <div class="column">
+      <div class="title" style= "font-style: Libre-Franklin; font-size:100px; font-weight:bold; column-width: auto">
+          <br><span style="color: #4ADD8F">AIML </span><span style="color: #7337FD">Data</span>
+      </div>
+    <h2 class="ui header" style="color: #fff">
+      <!-- <img src="assets/images/logo.png" class="image"> -->
+      <div class="content" style="margin-top: 50px; font-weight:600; font-size:30px">
+        Login
+      </div>
+    </h2>
+    {%- with form = login_user_form %}
+    <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form" class="ui small form">
+      {# <div class="ui grey stacked segment"> #}
+        {{ login_user_form.hidden_tag() }}
+            {# <i class="user icon"></i> #}
+        {{ render_field(form.email, icon="user icon", autofocus=True, errormsg='email' in form.errors) }}
+             {# {{ render_field_with_errors(login_user_form.email, icon="user icon", placeholder="Username",class="form-control",style="padding-left:2.3em") }} #}
+            {# <input type="text" name="username" placeholder="Username"> #}
+            {# <i class="lock icon"></i> #}
+        {{ render_field(form.password, icon="lock icon", errormsg='password' in form.errors) }}
+                {# {{ render_field_with_errors(login_user_form.password, icon="lock icon",placeholder="Password",class="form-control",style="padding-left:2.3em") }} #}
+            {# <input type="password" name="password" placeholder="Password"> #}
+        {# {{  render_field(login_user_form.submit, class="btn btn-primary",style="margin-left:1em") }} #}
+        <button type="submit" class="ui primary small submit button">Sign in</button>
+      {# </div> #}
+    </form>
+    {%- endwith %}
+  </div>
+</div>
+
+</body>
+</html>
+
+

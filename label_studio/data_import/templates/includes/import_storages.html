@@ -26,7 +26,7 @@
 
     <!-- Content -->
     <div class="scrolling content">
-      <form class="ui form" :id="storage.storage_for + '-storage-form'">
+      <form class="ui inverted form" :id="storage.storage_for + '-storage-form'">
         <input hidden name="storage_for" :value="storage_for">
 
         <span v-if="storage.type=='tasks-json'">To add new tasks go to <a href="./import">Import page</a>.<br/><br/></span>
@@ -66,16 +66,6 @@
 
         </div>
       </form>
-
-      <!-- Source help -->
-      <div class="ui icon message">
-        <i class="ui icon fas fa-info-circle" style="opacity: 0.1 !important;"></i>
-        <div class="content">
-          Read more about Amazon S3 or Google Cloud in
-          <a href="http://labelstud.io/guide/storage.html" target="_blank">documentation</a>
-        </div>
-      </div>
-
     </div>
 
     <br>
@@ -88,7 +78,7 @@
 
         <!-- Total tasks -->
         <div class="column center aligned align-grid">
-          <div class="ui statistic mini" style="display: inline">
+          <div class="ui inverted statistic mini" style="display: inline">
             <!-- Project loading spinner instead of task number -->
             <div v-if="!project_loaded" class="ui loader loading active inline"></div>
 
@@ -106,7 +96,7 @@
 
         <!-- Total completions -->
         <div class="column center aligned align-grid">
-          <div class="ui statistic mini" style="display: inline">
+          <div class="ui inverted statistic mini" style="display: inline">
               <!-- Project loading spinner instead of task number -->
               <div v-if="!project_loaded" class="ui loader loading active inline"></div>
 

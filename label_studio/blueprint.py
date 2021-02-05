@@ -25,7 +25,7 @@ from urllib.parse import unquote
 from datetime import datetime
 from gevent.pywsgi import WSGIServer
 from flask import (
-    request, jsonify, make_response, Response, send_file, session, redirect, current_app, Blueprint, url_for, g
+    request, jsonify, make_response, Response, send_file, session, redirect, current_app, Blueprint, url_for, g, render_template, abort
 )
 from flask_api import status
 from types import SimpleNamespace
@@ -50,6 +50,18 @@ from label_studio.data_manager.functions import remove_tabs
 
 from label_studio.data_manager.views import blueprint as data_manager_blueprint
 from label_studio.data_import.views import blueprint as data_import_blueprint
+
+from flask_sqlalchemy import SQLAlchemy
+from flask_security import Security, SQLAlchemyUserDatastore, \
+    UserMixin, RoleMixin, login_required, current_user, logout_user
+from flask_security.utils import encrypt_password
+import flask_admin
+from flask_admin.contrib import sqla
+from flask_admin import helpers as admin_helpers
+from flask_admin import BaseView, expose
+from wtforms import PasswordField
+from label_studio.models import db, Role, User
+import psycopg2
 
 INPUT_ARGUMENTS_PATH = pathlib.Path("server.json")
 
@@ -92,16 +104,17 @@ def app_before_request_callback():
     def prepare_globals():
         # setup session cookie
         if 'session_id' not in session:
-            session['session_id'] = str(uuid4())
+            session['session_id'] = str(current_user.id)
         g.project = project_get_or_create()
         g.analytics = Analytics(current_app.label_studio.input_args, g.project)
         g.sid = g.analytics.server_id
 
     # show different exception pages for api and other endpoints
-    if request.path.startswith('/api'):
-        return exception_handler(prepare_globals)()
-    else:
-        return exception_handler_page(prepare_globals)()
+    if current_user.is_authenticated:
+        if request.path.startswith('/api'):
+            return exception_handler(prepare_globals)()
+        else:
+            return exception_handler_page(prepare_globals)()
 
 
 @exception_handler
@@ -118,6 +131,60 @@ def app_after_request_callback(response):
 
     return response
 
+# Create customized model view class
+class MyModelView(sqla.ModelView):
+
+    def is_accessible(self):
+        if not current_user.is_active or not current_user.is_authenticated:
+            return False
+
+        if current_user.has_role('superuser'):
+            return True
+
+        return False
+
+    def _handle_view(self, name, **kwargs):
+        """
+        Override builtin _handle_view in order to redirect users when a view is not accessible.
+        """
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                # permission denied
+                abort(403)
+            else:
+                # login
+                return redirect(url_for('security.login', next=request.url))
+
+
+    # can_edit = True
+    edit_modal = True
+    create_modal = True    
+    can_export = True
+    can_view_details = True
+    details_modal = True
+
+class UserView(MyModelView):
+    column_editable_list = ['email', 'first_name', 'last_name']
+    column_searchable_list = column_editable_list
+    column_exclude_list = ['password']
+    #form_excluded_columns = column_exclude_list
+    column_details_exclude_list = column_exclude_list
+    column_filters = column_editable_list
+    form_overrides = {
+        'password': PasswordField
+    }
+
+class CustomView(BaseView):
+    @expose('/')
+    def index(self):
+        return self.render('admin/custom_index.html')
+
+# Add model views
+def admin_views(admin):
+    admin.add_view(MyModelView(Role, db.session, menu_icon_type='fa', menu_icon_value='fa-server', name="Roles"))
+    admin.add_view(UserView(User, db.session, menu_icon_type='fa', menu_icon_value='fa-users', name="Users"))
+    admin.add_view(CustomView(name="Custom view", endpoint='custom', menu_icon_type='fa', menu_icon_value='fa-connectdevelop',))
+
 
 def create_app(label_studio_config=None):
     """ Create application factory, as explained here:
@@ -129,6 +196,39 @@ def create_app(label_studio_config=None):
     app.secret_key = 'A0Zrdqwf1AQWj12ajkhgFN]dddd/,?RfDWQQT'
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     app.config['WTF_CSRF_ENABLED'] = False
+
+    DBUSER = 'admin'
+    DBPASS = 'gcptry3!@#'
+    DBHOST = 'db'
+    DBPORT = '5433'
+    DBNAME = 'aimlstudio_db'
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = \
+    'postgresql+psycopg2://{user}:{passwd}@{host}:{port}/{db}'.format(
+        user=DBUSER,
+        passwd=DBPASS,
+        host=DBHOST,
+        port=DBPORT,
+        db=DBNAME)
+    connection = psycopg2.connect(database="aimlstudio_db", user="admin", password="gcptry3!@#", host="db", port=5433)
+
+    # Flask-Security config
+    # SECURITY_URL_PREFIX = "/admin"
+    app.config['SECURITY_PASSWORD_HASH'] = "pbkdf2_sha512"
+    app.config['SECURITY_PASSWORD_SALT'] = "ATGUOHAELKiubahiughaerGOJAEGj"
+
+    # Flask-Security URLs, overridden because they don't put a / at the end
+    app.config['SECURITY_LOGIN_URL'] = "/login/"
+    app.config['SECURITY_LOGOUT_URL'] = "/logout/"
+
+    app.config['SECURITY_POST_LOGIN_VIEW'] = "/welcome"
+    # app.config['SECURITY_POST_LOGOUT_VIEW'] = "/login/"
+
+    # Flask-Security features
+    app.config['SECURITY_REGISTERABLE'] = True
+    app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
     app.url_map.strict_slashes = False
     app.label_studio = label_studio_config or config_from_file()
 
@@ -140,10 +240,57 @@ def create_app(label_studio_config=None):
     app.register_blueprint(data_manager_blueprint)
     app.register_blueprint(data_import_blueprint)
 
+    # Setup Flask-Security
+    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+    security = Security(app, user_datastore)
+
+    # Create admin
+    admin = flask_admin.Admin(
+        app,
+        'AIML Studio Dashboard',
+        base_template='my_master.html',
+        template_mode='bootstrap4',
+    )
+
+    # define a context processor for merging flask-admin's template context into the
+    # flask-security views.
+    @security.context_processor
+    def security_context_processor():
+        return dict(
+            admin_base_template=admin.base_template,
+            admin_view=admin.index_view,
+            h=admin_helpers,
+            get_url=url_for
+        )
+
+    admin_views(admin)
+
+    db.init_app(app)
+    
+    with app.app_context():
+        exists = db.session.query(User.id).filter_by(email='aiml_admin').scalar() is not None
+        if exists is None:
+            db.drop_all()
+            db.create_all()
+            user_role = Role(name='user')
+            super_user_role = Role(name='superuser')
+            db.session.add(user_role)
+            db.session.add(super_user_role)
+            db.session.commit()
+
+            test_user = user_datastore.create_user(
+                first_name='Admin',
+                email='aiml_admin',
+                password=encrypt_password('admin123'),
+                roles=[user_role, super_user_role]
+            )
+            db.session.commit()
+
+
     app.before_request(app_before_request_callback)
     app.after_request(app_after_request_callback)
-    return app
 
+    return app
 
 def project_get_or_create(multi_session_force_recreate=False):
     """ Return existed or create new project based on environment. Currently supported methods:
@@ -157,13 +304,13 @@ def project_get_or_create(multi_session_force_recreate=False):
     if input_args and input_args.command == 'start-multi-session':
         # get user from session
         if 'user' not in session:
-            session['user'] = str(uuid4())
+            session['user'] = str(current_user.id)
         user = session['user']
         g.user = user
 
         # get project from session
         if 'project' not in session or multi_session_force_recreate:
-            session['project'] = str(uuid4())
+            session['project'] = str(current_user.id)
         project = session['project']
 
         # check for shared projects and get owner user
@@ -206,6 +353,7 @@ def send_static(path):
 
 
 @blueprint.route('/data/<path:filename>')
+@login_required
 @requires_auth
 @exception_handler
 def get_data_file(filename):
@@ -230,9 +378,18 @@ def get_data_file(filename):
     directory = request.args.get('d')
     return flask.send_from_directory(directory, filename, as_attachment=True)
 
+@blueprint.route('/logout')
+@requires_auth
+@login_required
+def logout():
+    logout_user()
+    session.clear()
+    return redirect(url_for('security.login'))
+
 
 @blueprint.route('/samples/time-series.csv')
 @requires_auth
+@login_required
 def samples_time_series():
     """ Generate time series example for preview
     """
@@ -274,6 +431,7 @@ def samples_time_series():
 @blueprint.route('/')
 @blueprint.route('/label-old')
 @requires_auth
+@login_required
 @exception_handler_page
 def labeling_page():
     """ Label stream for tasks
@@ -313,6 +471,7 @@ def labeling_page():
 
 @blueprint.route('/welcome')
 @requires_auth
+@login_required
 @exception_handler_page
 def welcome_page():
     """ On-boarding page
@@ -331,6 +490,7 @@ def welcome_page():
 @blueprint.route('/setup')
 @blueprint.route('/settings')
 @requires_auth
+@login_required
 @exception_handler_page
 def setup_page():
     """ Setup labeling config
@@ -383,6 +543,7 @@ def setup_page():
 
 @blueprint.route('/export')
 @requires_auth
+@login_required
 @exception_handler_page
 def export_page():
     """ Export page: export completions as JSON or using converters
@@ -397,6 +558,7 @@ def export_page():
 
 @blueprint.route('/model')
 @requires_auth
+@login_required
 @exception_handler_page
 def model_page():
     """ Machine learning backends page
@@ -433,6 +595,7 @@ def model_page():
 
 @blueprint.route('/version')
 @requires_auth
+@login_required
 @exception_handler
 def version():
     """ Show LS backend and LS frontend versions
@@ -451,6 +614,7 @@ def version():
 
 @blueprint.route('/render-label-studio', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 def api_render_label_studio():
     """ Label studio frontend rendering for iframe
     """
@@ -484,6 +648,7 @@ def api_render_label_studio():
 
 @blueprint.route('/api/validate-config', methods=['POST'])
 @requires_auth
+@login_required
 def api_validate_config():
     """ Validate label config via tags schema
     """
@@ -501,6 +666,7 @@ def api_validate_config():
 
 @blueprint.route('/api/project', methods=['POST', 'GET', 'PATCH'])
 @requires_auth
+@login_required
 @exception_handler
 def api_project():
     """ Project properties and create a new for multi-session mode
@@ -527,6 +693,7 @@ def api_project():
 
 @blueprint.route('/api/project/config', methods=['POST'])
 @requires_auth
+@login_required
 def api_save_config():
     """ Save labeling config
     """
@@ -559,6 +726,7 @@ def api_save_config():
 
 @blueprint.route('/api/project/export', methods=['GET'])
 @requires_auth
+@login_required
 @exception_handler
 def api_export():
     """ Export labeling results using label-studio-converter to popular formats
@@ -582,6 +750,7 @@ def api_export():
 
 @blueprint.route('/api/project/storage-settings', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 @exception_handler
 def api_project_storage_settings():
     """ Set project storage settings: Amazon S3, Google CS, local file storages.
@@ -638,6 +807,7 @@ def api_project_storage_settings():
 
 @blueprint.route('/api/project-switch', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 @exception_handler
 def api_project_switch():
     """ Switch projects in multi-session mode
@@ -670,6 +840,7 @@ def api_project_switch():
 
 @blueprint.route('/api/tasks', methods=['GET', 'DELETE'])
 @requires_auth
+@login_required
 @exception_handler
 def api_all_tasks():
     """ Tasks API: retrieve by filters, delete all tasks
@@ -701,6 +872,7 @@ def api_all_tasks():
 
 @blueprint.route('/api/tasks/<task_id>', methods=['GET', 'DELETE', 'PATCH', 'POST'])
 @requires_auth
+@login_required
 @exception_handler
 def api_task_by_id(task_id):
     """ Get task by id, this call will refresh this task predictions
@@ -737,6 +909,7 @@ def api_task_by_id(task_id):
 
 @blueprint.route('/api/tasks/<task_id>/completions', methods=['POST', 'DELETE'])
 @requires_auth
+@login_required
 @exception_handler
 def api_tasks_completions(task_id):
     """ Save new completion or delete all completions
@@ -771,6 +944,7 @@ def api_tasks_completions(task_id):
 
 @blueprint.route('/api/tasks/<task_id>/completions/<completion_id>', methods=['POST', 'PATCH', 'DELETE'])
 @requires_auth
+@login_required
 @exception_handler
 def api_completion_by_id(task_id, completion_id):
     """ Update existing completion with patch.
@@ -803,6 +977,7 @@ def api_completion_by_id(task_id, completion_id):
 
 @blueprint.route('/api/completions', methods=['GET', 'DELETE'])
 @requires_auth
+@login_required
 @exception_handler
 def api_all_completions():
     """ Get all completion ids
@@ -824,6 +999,7 @@ def api_all_completions():
 
 @blueprint.route('/api/models', methods=['GET', 'DELETE'])
 @requires_auth
+@login_required
 @exception_handler
 def api_models():
     """ List ML backends names and remove it by name
@@ -842,6 +1018,7 @@ def api_models():
 
 @blueprint.route('/api/models/train', methods=['POST'])
 @requires_auth
+@login_required
 @exception_handler
 def api_train():
     """ Send train signal to ML backend
@@ -861,6 +1038,7 @@ def api_train():
 
 @blueprint.route('/api/models/predictions', methods=['GET', 'POST'])
 @requires_auth
+@login_required
 @exception_handler
 def api_predictions():
     """ Make ML predictions using ML backends
@@ -901,6 +1079,7 @@ def api_predictions():
 
 @blueprint.route('/api/states', methods=['GET'])
 @requires_auth
+@login_required
 @exception_handler
 def stats():
     """ Save states
@@ -910,6 +1089,7 @@ def stats():
 
 @blueprint.route('/api/health', methods=['GET'])
 @requires_auth
+@login_required
 @exception_handler
 def health():
     """ Health check
@@ -1016,3 +1196,5 @@ def main():
             http_server.serve_forever()
         else:
             app.run(host=server_host, port=port, debug=input_args.debug)
+
+

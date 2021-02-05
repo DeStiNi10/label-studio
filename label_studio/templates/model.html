@@ -6,15 +6,15 @@
     }
   </style>
 
-  <div class="ui container">
-    <div class="max-width-wrapper">
+  <div class="ui inverted container">
+    <div class="inverted max-width-wrapper">
 
       <div class="ui action input fluid">
         <input id="ml_backend_url" type="text" placeholder="http://localhost:9090">
-        <button class="ui positive button" onclick="addMlBackend()">Add Backend</button>
+        <button class="ui inverted positive button" onclick="addMlBackend()">Add Backend</button>
       </div>
-      <div class="ui divider hidden"></div>
-      <div class="ui three column grid">
+      <div class="ui inverted divider hidden"></div>
+      <div class="ui inverted three column grid">
 
         <div class="sixteen wide column">
           <div class="ui cards">
@@ -65,7 +65,7 @@
             {% else %}
               <div style="margin: 0 auto">
                 <p>No connected ML backends.
-                  <a href="https://labelstud.io/guide/ml.html">How to use ML models in Label Studio?</a>
+                  {# <a href="https://labelstud.io/guide/ml.html">How to use ML models in Label Studio?</a> #}
                 </p>
               </div>
             {% endfor %}
@@ -88,9 +88,9 @@
         {% if project.ml_backends_connected %}
           <!-- Start train -->
           <div class="row centered aligned">
-            <div class="ui positive big button" onclick="start_train()">Start Training</div>
+            <div class="ui inverted positive big button" onclick="start_train()">Start Training</div>
             {% if project.config['enable_predictions_button'] %}
-              <div class="ui positive big button" onclick="start_predictions()">Start Predictions</div>
+              <div class="ui inverted positive big button" onclick="start_predictions()">Start Predictions</div>
             {% endif %}
           </div>
         {% endif %}
@@ -99,11 +99,11 @@
           <!-- File uploader -->
           <div class="sixteen wide column">
             <!-- Input file form -->
-            <div class="ui form">
+            <div class="ui inverted form">
               <input id="file-input" type="file" name="file" multiple onchange="send_data(event)"
                      style="display: none"/>
 
-              <div class="ui content">
+              <div class="ui inverted content">
                 <div id="holder">
                   <div class="text">
                     <i class="ui icon huge upload"></i>
@@ -122,7 +122,7 @@
   </div>
 
   <!-- Error log dialog -->
-  <div class="ui modal" id="error-log-dialog">
+  <div class="ui inverted modal" id="error-log-dialog">
     <i class="close icon"></i>
     <div class="header red">
       ML Backend Error

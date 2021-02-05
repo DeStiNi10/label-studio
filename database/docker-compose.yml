@@ -1,0 +1,22 @@
+version: "3"
+
+services: 
+  db:
+    image: postgres:10
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: gcptry3!@#
+      POSTGRES_DB: aimlstudio_db
+    expose:
+      - "5433" # Publishes 5433 to other containers but NOT to host machine
+    ports:
+      - "5433:5433"
+    restart: always
+    networks:
+      - database
+    volumes:
+      - ./aimlstudio_db:/var/lib/postgresql/data
+    command: -p 5433
+networks:
+  database:
+      driver: bridge

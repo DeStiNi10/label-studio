@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 {% block body %}
 
-  <div class="ui container" id="export">
+  <div class="ui inverted container" id="export">
     <!-- Export help message -->
-    <div class="ui message">
+    <div class="ui inverted message">
       <i class="close icon"></i>
 
       <!-- Label config -->
-      <div class="header">Export help</div>
-      <div class="content">
-        <ul class="ui list">
+      <div class="inverted header">Export help</div>
+      <div class="inverted content">
+        <ul class="ui inverted list">
           <li>You can export dataset in one of the following formats:</li>
           <ul>
             <li>JSON</li>
@@ -30,13 +30,13 @@
               <span class="ui label basic tiny">semantic segmentation</span>
             </li>
           </ul>
-          <li style="margin-top: 0.5em;">Can't find an export format?<br>
+          {# <li style="margin-top: 0.5em;">Can't find an export format?<br>
             <p>Please let us know in <a class="no-go"
                href="https://join.slack.com/t/label-studio/shared_invite/zt-cr8b7ygm-6L45z7biEBw4HXa5A2b5pw">
                Slack</a> or submit an issue to the
               <a class="no-go" href="https://github.com/heartexlabs/label-studio-converter/issues">
               Repository</a></p>
-          </li>
+          </li> #}
         </ul>
       </div>
       <br>
@@ -50,7 +50,7 @@
     </div>
 
     <center>
-      <div class="header">Choose export format:</div>
+      <div class="header" style="color:white; margin-bottom: 1em">Choose export format:</div>
       <select id="export-format-dropdown" class="ui dropdown">
         {% for format in formats %}
           <option value="{{ format }}">{{ format }}</option>
@@ -62,10 +62,6 @@
          onclick="downloadFile('api/project/export?format=' + $('#export-format-dropdown').val())">
         Export Dataset with Completions</a>
       <br>
-
-      <div style="margin-top: 5em">
-        <img src="static/images/opossum_snuggle.png" width="250px" style="display: block;" />
-      </div>
     </center>
 
   </div>

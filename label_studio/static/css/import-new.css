@@ -65,7 +65,7 @@ body {
 
 #import-tasks button {
   background: var(--theme-white);
-  color: var(--theme-text);
+  color: #000;
 }
 
 #import-tasks button:hover {
@@ -116,7 +116,6 @@ body {
 
 #import-tasks h1::before {
   content: "";
-  background-image: url(/static/images/opossum_hanging.svg);
   background-size: 100px;
   position: absolute;
   left: -132px;
@@ -148,7 +147,7 @@ body {
 /* Import files via dropzone */
 
 #holder.dropzone {
-  background: var(--blue-6-15);
+  background: #fff;
   border: 1px dashed var(--theme-accent);
   border-radius: 4px;
   padding: 32px;
