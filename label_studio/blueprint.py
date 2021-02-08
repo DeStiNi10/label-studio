@@ -267,25 +267,6 @@ def create_app(label_studio_config=None):
 
     db.init_app(app)
   
-    # with app.app_context():
-    #     exists = db.session.query(User.id).filter_by(email='aiml_admin').scalar() is not None
-    #     if exists is None:
-    #         db.drop_all()
-    #         db.create_all()
-    #         user_role = Role(name='user')
-    #         super_user_role = Role(name='superuser')
-    #         db.session.add(user_role)
-    #         db.session.add(super_user_role)
-    #         db.session.commit()
-
-    #         test_user = user_datastore.create_user(
-    #             first_name='Admin',
-    #             email='aiml_admin',
-    #             password=encrypt_password('admin123'),
-    #             roles=[user_role, super_user_role]
-    #         )
-    #         db.session.commit()
-    
     with app.app_context():
         #Create tables
         db.create_all()
@@ -303,12 +284,6 @@ def create_app(label_studio_config=None):
 
         # Commit any database changes; the User and Roles must exist before we can add a Role to the User
         db.session.commit()
-
-        # Give one User has the "end-user" role, while the other has the "admin" role. (This will have no effect if the
-        # Users already have these Roles.) Again, commit any database changes.
-        # user_datastore.add_role_to_user('test_user', 'end-user')
-        # user_datastore.add_role_to_user('aiml_admin', 'admin')
-        # db.session.commit()
 
     app.before_request(app_before_request_callback)
     app.after_request(app_after_request_callback)
